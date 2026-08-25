@@ -1,1 +1,812 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Магнит Плюс Премиум — прототип</title>
+<style>
+  :root {
+    --bg: #111;
+    --phone-bg: #fff;
+    --accent: #f11f11;
+    --gradient: linear-gradient(180deg, #ff6d3b 0%, #ff004d 62%, #f11011 100%);
+    --text: #1f1f1f;
+    --muted: #555;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: grid;
+    place-items: center;
+  }
+  .app {
+    height: min(800px, 100vh);
+    width: auto;
+    max-width: 100vw;
+    aspect-ratio: 360 / 800;
+    background: var(--phone-bg);
+    position: relative;
+    overflow: hidden;
+  }
+  @media (min-width: 700px) {
+    .app {
+      border-radius: 28px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.35);
+    }
+  }
 
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    background: #fff;
+  }
+  .screen.active { display: block; }
+
+  .static-screen {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+  }
+  .static-screen > img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+
+  .hotspot {
+    position: absolute;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  /* Screen 1 */
+  #homeBannerHotspot {
+    left: 0;
+    right: 0;
+    top: 86%;
+    height: 4%;
+  }
+
+  /* Screen 2 */
+  #sheetCTAHotspot {
+    left: 4.4%;
+    width: 91.2%;
+    top: 81.1%;
+    height: 7.4%;
+    border-radius: 18px;
+  }
+
+  /* Screen 3 */
+  .browser-screen {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+  }
+  .browser-screen.active { display: flex; }
+  .browser-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    background: #fff;
+    padding-bottom: 164px;
+    scrollbar-width: none;
+  }
+  .browser-scroll::-webkit-scrollbar { display: none; }
+
+  .landing-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .landing-wrap > img {
+    width: 100%;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .toggle-hit {
+    position: absolute;
+    right: 4.7%;
+    width: 20%;
+    height: 2.55%;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  .toggle-visual {
+    position: absolute;
+    right: 5.7%;
+    width: 18%;
+    aspect-ratio: 1.86 / 1;
+    border-radius: 999px;
+    opacity: 0;
+    transform: translateY(0);
+    transition: opacity .18s ease;
+    pointer-events: none;
+    background: #ef1608;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  }
+  .toggle-visual::after {
+    content: "";
+    position: absolute;
+    top: 5%;
+    right: 4%;
+    width: 43%;
+    height: 90%;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0,0,0,.18);
+  }
+  .toggle-visual.on { opacity: 1; }
+
+  .cta-sticky {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to top, #fff 88%, rgba(255,255,255,.95));
+    padding: 10px 16px calc(14px + env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 18px rgba(0,0,0,.04);
+  }
+  .selection-summary {
+    min-height: 18px;
+    margin: 0 0 10px;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.25;
+    color: #3f3f46;
+    opacity: 0;
+    transition: opacity .15s ease;
+  }
+  .selection-summary.visible { opacity: 1; }
+
+  .main-cta {
+    width: 100%;
+    border: 0;
+    border-radius: 14px;
+    color: #fff;
+    padding: 16px 18px;
+    font-size: 16px;
+    line-height: 1.2;
+    font-weight: 700;
+    background: linear-gradient(180deg, #ff7a33 0%, #ff0055 58%, #f21918 100%);
+    cursor: pointer;
+  }
+
+  /* Success overlay card for selected service */
+  .success-service {
+    position: absolute;
+    left: 4.5%;
+    right: 4.5%;
+    top: 37.4%;
+    min-height: 10.3%;
+    background: #f1f1f1;
+    border-radius: 18px;
+    display: none;
+    align-items: center;
+    padding: 3.2% 3.5%;
+    gap: 4%;
+  }
+  .success-service.visible { display: flex; }
+  .success-icon {
+    width: 15%;
+    aspect-ratio: 1 / 1;
+    border-radius: 18px;
+    background: #ff7a33;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 34px;
+    font-weight: 700;
+  }
+  .success-copy strong {
+    display: block;
+    font-size: clamp(16px, 2vw, 24px);
+    line-height: 1.2;
+    color: #4a4a4a;
+    margin-bottom: 6px;
+  }
+  .success-copy span {
+    display: block;
+    font-size: clamp(13px, 1.65vw, 18px);
+    line-height: 1.28;
+    color: #4a4a4a;
+  }
+
+  /* optional desktop helper */
+  .hint {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,.5);
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    z-index: 20;
+    pointer-events: none;
+    opacity: .85;
+  }
+  @media (max-width: 699px) {
+    .hint { display: none; }
+  }
+
+  .browser-screen {
+    flex-direction: column;
+    background: #fff;
+  }
+  .browser-chrome {
+    flex: 0 0 auto;
+    width: 100%;
+    background: #fff;
+    z-index: 4;
+  }
+  .browser-chrome img {
+    width: 100%;
+    height: auto;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+  }
+  .browser-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #fff;
+    padding-bottom: 150px;
+    scrollbar-width: none;
+    overscroll-behavior: contain;
+  }
+  .browser-scroll::-webkit-scrollbar { display: none; }
+  .landing-content {
+    width: 100%;
+    position: relative;
+  }
+  .landing-segment {
+    width: 100%;
+    line-height: 0;
+  }
+  .landing-segment img {
+    width: 100%;
+    height: auto;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .cta-sticky {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    padding: 10px 20px calc(12px + env(safe-area-inset-bottom));
+    background: #fff;
+    box-shadow: 0 -1px 0 rgba(0,0,0,.08);
+  }
+  .selection-summary {
+    min-height: 16px;
+    margin-bottom: 7px;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.25;
+    color: #444;
+    opacity: 0;
+  }
+  .selection-summary.visible { opacity: 1; }
+  .main-cta {
+    width: 100%;
+    min-height: 48px;
+    border: 0;
+    border-radius: 13px;
+    background: linear-gradient(90deg,#ff005c 0%,#ff0049 55%,#ff7438 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .legal-copy {
+    margin-top: 10px;
+    text-align: center;
+    color: #8b8b8b;
+    font-size: 9px;
+    line-height: 1.25;
+  }
+  /* The option rows live approximately in the 3rd–4th supplied slices.
+     Transparent hit areas are layered over them and red switch states are drawn on top. */
+  .options-interactive {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 43.35%;
+    height: 21.4%;
+    pointer-events: none;
+  }
+  .landing-toggle-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 18.6%;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .landing-toggle-row:nth-child(1) { top: 0%; }
+  .landing-toggle-row:nth-child(2) { top: 20.0%; }
+  .landing-toggle-row:nth-child(3) { top: 40.0%; }
+  .landing-toggle-row:nth-child(4) { top: 60.0%; }
+  .landing-toggle-row:nth-child(5) { top: 80.0%; }
+
+  .landing-toggle-row::before {
+    content: "";
+    position: absolute;
+    right: 9%;
+    top: 31%;
+    width: 14.2%;
+    aspect-ratio: 1.75 / 1;
+    border-radius: 999px;
+    background: #ef1b0c;
+    opacity: 0;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
+    transition: opacity .12s ease;
+  }
+  .landing-toggle-row::after {
+    content: "";
+    position: absolute;
+    right: 9.7%;
+    top: 33.2%;
+    width: 6.8%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+  .landing-toggle-row.is-on::before,
+  .landing-toggle-row.is-on::after { opacity: 1; }
+
+
+  .exact-options-block {
+    position: relative;
+    width: 100%;
+    line-height: 0;
+    background: #fff;
+  }
+  .exact-options-block img {
+    display: block;
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .exact-switch {
+    position: absolute;
+    right: 6.9%;
+    width: 14.1%;
+    height: 6.1%;
+    border: 0;
+    padding: 0;
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .exact-switch::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: #ef1c0d;
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+  .exact-switch::after {
+    content: "";
+    position: absolute;
+    top: 8%;
+    right: 7%;
+    width: 43%;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,.12);
+    transition: opacity .12s ease;
+  }
+  .exact-switch.is-on::before,
+  .exact-switch.is-on::after {
+    opacity: 1;
+  }
+
+  .cta-sticky {
+    padding: 8px 20px calc(10px + env(safe-area-inset-bottom));
+    background: #fff;
+  }
+  .selection-summary {
+    min-height: 14px;
+    margin: 0 0 7px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    line-height: 1.25;
+    font-weight: 400;
+    color: #444;
+  }
+  .main-cta {
+    min-height: 48px;
+    border-radius: 13px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0;
+    background: linear-gradient(110deg,#ff0068 0%,#ff004d 58%,#ff7438 100%);
+  }
+  .legal-copy {
+    margin-top: 9px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 9px;
+    line-height: 1.28;
+    font-weight: 400;
+    color: #8e8e8e;
+  }
+
+
+  /* Exact landing rebuilt from the user's vertical-scroll screenshots */
+  .browser-screen {
+    flex-direction: column;
+    background: #fff;
+  }
+  .browser-screen.active { display: flex; }
+
+  .browser-chrome {
+    flex: 0 0 96px;
+    width: 100%;
+    background: #fff;
+    z-index: 20;
+  }
+  .browser-chrome img {
+    width: 100%;
+    height: 96px;
+    object-fit: fill;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .browser-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 154px;
+    background: #fff;
+    scrollbar-width: none;
+    overscroll-behavior: contain;
+  }
+  .browser-scroll::-webkit-scrollbar { display: none; }
+
+  .landing-exact {
+    position: relative;
+    width: 360px;
+    max-width: 100%;
+    margin: 0 auto;
+    line-height: 0;
+  }
+  .landing-exact > img {
+    width: 100%;
+    height: auto;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  /* ONLY the physical switch is interactive — not the card/row. */
+  .switch-hit {
+    position: absolute;
+    left: 278px;
+    width: 50px;
+    height: 32px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .switch-hit::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: #f12212;
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+  .switch-hit::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.12);
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+  .switch-hit.is-on::before,
+  .switch-hit.is-on::after { opacity: 1; }
+
+  .cta-sticky {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    padding: 8px 20px 10px;
+    background: #fff;
+    box-shadow: 0 -1px 0 rgba(0,0,0,.06);
+    font-family: Roboto, Arial, sans-serif;
+  }
+  .selection-summary {
+    min-height: 0;
+    margin: 0;
+    height: 0;
+    overflow: hidden;
+    text-align: center;
+    color: #444;
+    font-size: 12px;
+    line-height: 1.25;
+    transition: height .15s ease, margin .15s ease, opacity .15s ease;
+    opacity: 0;
+  }
+  .selection-summary.visible {
+    height: 18px;
+    margin: 0 0 6px;
+    opacity: 1;
+  }
+  .main-cta {
+    width: 100%;
+    height: 48px;
+    min-height: 48px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 13px;
+    background: linear-gradient(110deg,#ff0062 0%,#ff004a 60%,#ff7338 100%);
+    color: #fff;
+    font-family: Roboto, Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 48px;
+    letter-spacing: 0;
+    text-align: center;
+    cursor: pointer;
+  }
+  .legal-copy {
+    margin-top: 9px;
+    color: #929292;
+    font-family: Roboto, Arial, sans-serif;
+    font-size: 9px;
+    font-weight: 400;
+    line-height: 1.28;
+    text-align: center;
+  }
+  .android-nav {
+    height: 45px;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 58px;
+    color: #969696;
+  }
+  .android-nav .square {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    background: #969696;
+  }
+  .android-nav .triangle {
+    width: 0; height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 13px solid #969696;
+  }
+  .android-nav .circle {
+    width: 17px; height: 17px;
+    border: 2px solid #969696;
+    border-radius: 50%;
+  }
+
+</style>
+</head>
+<body>
+  <div class="app">
+<!-- Screen 1 -->
+    <section class="screen active" id="screen-home" aria-label="Главный экран">
+      <div class="static-screen">
+        <img src="home.png?v=2" alt="Главный экран Магнит" />
+        <button class="hotspot" id="homeBannerHotspot" aria-label="Открыть Магнит Плюс Премиум"></button>
+      </div>
+    </section>
+
+    <!-- Screen 2 -->
+    <section class="screen" id="screen-sheet" aria-label="Шторка подписки">
+      <div class="static-screen">
+        <img src="sheet.png?v=2" alt="Шторка Магнит Плюс Премиум" />
+        <button class="hotspot" id="sheetCTAHotspot" aria-label="Подключить за 99 в месяц"></button>
+      </div>
+    </section>
+
+    
+    
+    <!-- Screen 3 -->
+    <section class="screen browser-screen" id="screen-landing" aria-label="Лендинг Премиум в браузере">
+      <div class="browser-chrome">
+        <img src="browser-chrome.png?v=2" alt="Панель браузера magnit.ru">
+      </div>
+
+      <div class="browser-scroll" id="landingScroll">
+        <div class="landing-exact">
+          <img src="landing.png?v=2" alt="Лендинг Магнит Плюс Премиум">
+
+          <!-- Only the five switches are clickable. Coordinates are based on the 360×800 reference. -->
+          <button class="switch-hit" data-option="Wink" style="top:1388px" aria-label="Wink"></button>
+          <button class="switch-hit" data-option="Kion" style="top:1484px" aria-label="Kion"></button>
+          <button class="switch-hit" data-option="Start" style="top:1580px" aria-label="Start"></button>
+          <button class="switch-hit" data-option="Premier" style="top:1676px" aria-label="Premier"></button>
+          <button class="switch-hit" data-option="Rutube" style="top:1772px" aria-label="Rutube"></button>
+        </div>
+      </div>
+
+      <div class="cta-sticky" id="landingSticky">
+        <div class="selection-summary" id="selectionSummary"></div>
+        <button class="main-cta" id="landingCTA">Подключить за 99 ₽ в месяц</button>
+        <div class="legal-copy">
+          Нажимая кнопку, вы соглашаетесь на автопродление<br>
+          подписки и принимаете <u>пользовательское<br>
+          соглашение</u>, <u>политику конфиденциальности</u><br>
+          и <u>правила программы лояльности</u>
+        </div>
+        <div class="android-nav" aria-hidden="true">
+          <span class="square"></span><span class="triangle"></span><span class="circle"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 4 -->
+    <section class="screen" id="screen-payment" aria-label="Оплата подписки">
+      <div class="static-screen">
+        <img src="payment.png?v=2" alt="Экран оплаты" />
+        <button class="hotspot" id="paymentCTAHotspot" style="left:5.6%;width:89.5%;top:76.0%;height:7.3%;border-radius:18px" aria-label="Подключить"></button>
+      </div>
+    </section>
+
+    
+    <!-- Screen 5 -->
+    <section class="screen" id="screen-success" aria-label="Подписка подключена">
+      <div class="static-screen">
+        <img src="success.png?v=2" alt="Подписка подключена">
+      </div>
+    </section>
+
+
+  </div>
+
+<script>
+(() => {
+  const BASE_PRICE = 99;
+  const OPTION_PRICE = 149;
+
+  const state = {
+    selected: new Set(),
+    order: []
+  };
+
+  const screens = {
+    home: document.getElementById('screen-home'),
+    sheet: document.getElementById('screen-sheet'),
+    landing: document.getElementById('screen-landing'),
+    payment: document.getElementById('screen-payment'),
+    success: document.getElementById('screen-success')
+  };
+
+  const summary = document.getElementById('selectionSummary');
+  const landingCTA = document.getElementById('landingCTA');
+  const landingScroll = document.getElementById('landingScroll');
+
+  function showScreen(name) {
+    Object.values(screens).forEach(el => el.classList.remove('active'));
+    screens[name].classList.add('active');
+
+    if (name === 'landing') {
+      landingScroll.scrollTop = 0;
+      updateLanding();
+    }
+  }
+
+  function totalPrice() {
+    return BASE_PRICE + state.selected.size * OPTION_PRICE;
+  }
+
+  function formatSummary() {
+    if (!state.order.length) return '';
+    return 'Вы подключаете Премиум + ' + state.order.join(', ');
+  }
+
+  function updateLanding() {
+    const activeNames = new Set(state.order);
+
+    document.querySelectorAll('.switch-hit').forEach(el => {
+      const isOn = activeNames.has(el.dataset.option);
+      el.classList.toggle('is-on', isOn);
+      el.setAttribute('aria-pressed', isOn ? 'true' : 'false');
+    });
+
+    const text = formatSummary();
+
+    if (text) {
+      summary.textContent = text;
+      summary.classList.add('visible');
+    } else {
+      summary.textContent = '';
+      summary.classList.remove('visible');
+    }
+
+    landingCTA.textContent = `Подключить за ${totalPrice()} ₽ в месяц`;
+  }
+
+  function toggleOption(name) {
+    if (state.selected.has(name)) {
+      state.selected.delete(name);
+      state.order = state.order.filter(item => item !== name);
+    } else {
+      state.selected.add(name);
+      state.order.push(name);
+    }
+
+    updateLanding();
+  }
+
+  document.getElementById('homeBannerHotspot').addEventListener('click', () => {
+    showScreen('sheet');
+  });
+
+  document.getElementById('sheetCTAHotspot').addEventListener('click', () => {
+    showScreen('landing');
+  });
+
+  document.querySelectorAll('.switch-hit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggleOption(btn.dataset.option);
+    });
+  });
+
+  landingCTA.addEventListener('click', () => {
+    showScreen('payment');
+  });
+
+  document.getElementById('paymentCTAHotspot').addEventListener('click', () => {
+    showScreen('success');
+  });
+
+  updateLanding();
+})();
+</script>
+</body>
+</html>
